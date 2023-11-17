@@ -88,7 +88,7 @@ WHERE c.pais = 'Spain';
 ```SQL
     SELECT
         codigo_pedido,
-        codigo_cliente,
+        codigo_cliente, 
         fecha_esperada,
         fecha_entrega
     FROM
@@ -98,35 +98,49 @@ WHERE c.pais = 'Spain';
 ```
 - ¿Sería posible resolver esta consulta utilizando el operador de suma + o resta - ?
 ```SQL
-
+    SELECT
+        codigo_pedido,
+        codigo_cliente,
+        fecha_esperada,
+        fecha_entrega
+    FROM
+        pedido p
+    WHERE  p.fecha_entrega - p.fecha_esperada  <= -2;
 ```
 
 11. Devuelve un listado de todos los pedidos que fueron rechazados en 2009.
 ```SQL
-
+        SELECT * FROM pedido p
+        WHERE p.estado = 'Rechazado' and YEAR(p.fecha_entrega) = '2009';
 ```
 
 12. Devuelve un listado de todos los pedidos que han sido entregados en el mes de enero de cualquier año.
 ```SQL
-
+    SELECT * FROM pedido p
+    WHERE MONTH(p.fecha_entrega) = '01';
 ```
 
 13. Devuelve un listado con todos los pagos que se realizaron en el año 2008 mediante Paypal. Ordene el resultado de mayor a menor.
 ```SQL
-
+    SELECT * FROM pago p
+    WHERE p.forma_pago = 'PayPal'
+    ORDER BY p.codigo_cliente ASC;
 ```
 
 14. Devuelve un listado con todas las formas de pago que aparecen en la tabla pago. Tenga en cuenta que no deben aparecer formas de pago repetidas.
 ```SQL
-
+    SELECT DISTINCT p.forma_pago FROM pago p
 ```
 
 15. Devuelve un listado con todos los productos que pertenecen a la gama Ornamentales y que tienen más de 100 unidades en stock. El listado deberá estar ordenado por su precio de venta, mostrando en primer lugar los de mayor precio.
 ```SQL
-
+    SELECT DISTINCT * FROM  producto p
+    WHERE p.gama = 'Ornamentales' and p.cantidad_en_stock >= 100
+    ORDER BY p.precio_venta DESC;
 ```
 
 16. Devuelve un listado con todos los clientes que sean de la ciudad de Madrid y cuyo representante de ventas tenga el código de empleado 11 o 30.
 ```SQL
-
+    SELECT DISTINCT * FROM  cliente c
+    WHERE c.ciudad = 'Madrid' AND (c.codigo_empleado_rep_ventas = 11 OR c.codigo_empleado_rep_ventas = 30);
 ```

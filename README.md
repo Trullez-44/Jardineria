@@ -21,7 +21,7 @@ JOIN pago p ON p.codigo_cliente = c.codigo_cliente;
     SELECT DISTINCT c.nombre_cliente, e.nombre, e.codigo_empleado
     FROM cliente c
     JOIN empleado e ON c.codigo_empleado_rep_ventas = e.codigo_empleado
-    WHERE c.codigo_cliente NOT IN (select p.codigo_cliente from pago p);
+    WHERE c.codigo_cliente NOT IN (SELECT p.codigo_cliente FROM pago p);
 ```
 
 4.Devuelve el nombre de los clientes que han hecho pagos y el nombre de sus representantes junto con la ciudad de la
@@ -32,7 +32,7 @@ SELECT DISTINCT c.codigo_cliente, c.nombre_cliente, e.nombre, f.ciudad;
 FROM empleado e
 JOIN cliente c ON  e.codigo_empleado = c.codigo_empleado_rep_ventas
 JOIN oficina f ON e.codigo_oficina = f.codigo_oficina
-WHERE c.codigo_cliente IN (select p.codigo_cliente from pago p)
+WHERE c.codigo_cliente IN (SELECT p.codigo_cliente FROM pago p)
 ORDER BY codigo_cliente ASC;
 ```
  
@@ -43,7 +43,7 @@ SELECT DISTINCT c.codigo_cliente, c.nombre_cliente, e.nombre, f.ciudad
 FROM empleado e
 JOIN cliente c ON  e.codigo_empleado = c.codigo_empleado_rep_ventas
 JOIN oficina f ON e.codigo_oficina = f.codigo_oficina
-WHERE c.codigo_cliente NOT IN (select p.codigo_cliente from pago p)
+WHERE c.codigo_cliente NOT IN (SELECT p.codigo_cliente FROM pago p)
 ORDER BY codigo_cliente ASC;
 ```
 
@@ -52,7 +52,7 @@ ORDER BY codigo_cliente ASC;
  SELECT DISTINCT concat(f.linea_direccion1,' ',linea_direccion2) as DIRECCIÓN_OFICINA
 FROM empleado e
 join oficina f on e.codigo_oficina = f.codigo_oficina
-WHERE e.codigo_empleado in (select c.codigo_empleado_rep_ventas from cliente c Where c.ciudad = 'Fuenlabrada');
+WHERE e.codigo_empleado SELECT (SELECT c.codigo_empleado_rep_ventas FROM cliente c Where c.ciudad = 'Fuenlabrada');
 ```
 
 7.Devuelve el nombre de los clientes y el nombre de sus representantes junto con la Ciudad de la oficina a la que pertenece
@@ -81,7 +81,7 @@ JOIN empleado j ON sj.codigo_jefe = j.codigo_empleado;
 
 10. Devuelve el nombre de los clientes a los que no se les ha entregado a tiempo un pedido.
 ```SQL
-select c.nombre_cliente from pedido p
+SELECT c.nombre_cliente FROM pedido p
 join cliente c ON p.codigo_cliente = c.codigo_cliente
 WHERE DATE(fecha_esperada) < DATE(fecha_entrega)
 ORDER BY c.nombre_cliente ASC;
@@ -375,21 +375,21 @@ WHERE c.pais = 'Spain';
 
 1. Devuelve el nombre del cliente con mayor límite de crédito.
 ```SQL
-select c.codigo_cliente, c.nombre_cliente, c.limite_credito
-from cliente c
-WHERE c.limite_credito = (select limite_credito from cliente order by limite_credito DESC LIMIT 1);
+SELECT c.codigo_cliente, c.nombre_cliente, c.limite_credito
+FROM cliente c
+WHERE c.limite_credito = (SELECT limite_credito FROM cliente order by limite_credito DESC LIMIT 1);
 ```
 2. Devuelve el nombre del producto que tenga el precio de venta más caro.
 ```SQL
-select p.nombre, p.precio_venta
-from producto p
-WHERE p.precio_venta = (select MAX(p.precio_venta) from producto p);
+SELECT p.nombre, p.precio_venta
+FROM producto p
+WHERE p.precio_venta = (SELECT MAX(p.precio_venta) FROM producto p);
 ```
 3. Devuelve el nombre del producto del que se han vendido más unidades. (Tenga en cuenta que tendrá que calcular cuál es el número total de unidades que se han vendido de cada producto a partir de los datos de la tabla `detalle_pedido`).
 ```SQL
 SELECT p.nombre, p.codigo_producto
 FROM producto p
-WHERE p.codigo_producto = (select codigo_producto from detalle_pedido group by codigo_producto order by sum(cantidad) desc limit 1);
+WHERE p.codigo_producto = (SELECT codigo_producto FROM detalle_pedido group by codigo_producto order by sum(cantidad) desc limit 1);
 ```
 4. Los clientes cuyo límite de crédito sea mayor que los pagos que haya realizado. (Sin utilizar `INNER JOIN`).
 ```SQL
@@ -399,19 +399,19 @@ SELECT * FROM cliente c WHERE c.limite_credito >= (SELECT sum(total) FROM pago W
 ```SQL
 SELECT p.codigo_producto, p.nombre, p.cantidad_en_stock
 FROM producto p
-WHERE p.cantidad_en_stock = (select max(cantidad_en_stock) from producto);
+WHERE p.cantidad_en_stock = (SELECT max(cantidad_en_stock) FROM producto);
 ```
 6. Devuelve el producto que menos unidades tiene en stock.
 ```SQL
 SELECT p.codigo_producto, p.nombre, p.cantidad_en_stock
 FROM producto p
-WHERE p.cantidad_en_stock = (select min(cantidad_en_stock) from producto);
+WHERE p.cantidad_en_stock = (SELECT min(cantidad_en_stock) FROM producto);
 ```
 7. Devuelve el nombre, los apellidos y el email de los empleados que están a cargo de **Alberto Soria**.
 ```SQL
-select e.nombre, e.apellido1, e.email
-from empleado e
-WHERE e.codigo_jefe = (select codigo_empleado from empleado where empleado.nombre = 'Alberto' AND empleado.apellido1 = 'Soria');
+SELECT e.nombre, e.apellido1, e.email
+FROM empleado e
+WHERE e.codigo_jefe = (SELECT codigo_empleado FROM empleado WHERE empleado.nombre = 'Alberto' AND empleado.apellido1 = 'Soria');
 ```
 
 ### 1.4.8.2 Subconsultas con ALL y ANY
@@ -478,8 +478,10 @@ WHERE e.codigo_empleado NOT IN (SELECT codigo_empleado_rep_ventas FROM cliente);
 ```
 6. Devuelve las oficinas donde **no trabajan** ninguno de los empleados que hayan sido los representantes de ventas de algún cliente que haya realizado la compra de algún producto de la gama `Frutales`.
 ```SQL
-SELECT * 
-FROM oficina
+SELECT DISTINCT f.* 
+FROM oficina f 
+WHERE f.codigo_oficina NOT IN (SELECT codigo_oficina FROM empleado WHERE codigo_empleado IN (SELECT codigo_empleado_rep_ventas FROM cliente WHERE codigo_cliente IN (SELECT codigo_cliente FROM pedido WHERE codigo_pedido IN (SELECT codigo_pedido FROM detalle_pedido WHERE codigo_producto IN ( SELECT codigo_producto FROM producto WHERE gama = 'Frutales')))));
+
 ```
 7. Devuelve un listado con los clientes que han realizado algún pedido pero no han realizado ningún pago.
 ```SQL
@@ -499,13 +501,13 @@ AND c.codigo_cliente NOT IN (
 ```SQL
 SELECT *
 FROM cliente c
-WHERE NOT EXISTS (select 1 from pago p WHERE p.codigo_cliente = c.codigo_cliente);
+WHERE NOT EXISTS (SELECT 1 FROM pago p WHERE p.codigo_cliente = c.codigo_cliente);
 ```
 2. Devuelve un listado que muestre solamente los clientes que sí han realizado algún pago.
 ```SQL
 SELECT *
 FROM cliente c
-WHERE EXISTS (select 1 from pago p WHERE p.codigo_cliente = c.codigo_cliente);
+WHERE EXISTS (SELECT 1 FROM pago p WHERE p.codigo_cliente = c.codigo_cliente);
 ```
 3. Devuelve un listado de los productos que nunca han aparecido en un pedido.
 ```SQL
@@ -519,3 +521,54 @@ WHERE EXISTS (select 1 from pago p WHERE p.codigo_cliente = c.codigo_cliente);
     FROM producto p
     WHERE EXISTS (SELECT * FROM detalle_pedido dp WHERE dp.codigo_producto = p.codigo_producto);
 ```
+# VIDEO TIPS
+
+### GROUP BY TIPS
+#### Agrupamiento y Funciones de Agregado
+
+##### Este codigo es para que cuantos empleados hay de cada cargo
+```SQL
+select  e.puesto, COUNT(*) puesto
+from empleado e
+group by e.puesto;
+
+```
+##### Este codigo es para ver cuantos empleados representantes de ventas que hay y en que oficina se ubican usando HAVING
+```SQL
+select e.codigo_oficina, e.puesto, COUNT(*) puesto
+from empleado e
+group by e.codigo_oficina, e.puesto
+having e.puesto = 'Representante Ventas';
+
+```
+#### Funciones Escalares
+##### Este codigo es para mostrar las iniciales de los empleados, su puesto y numero de empleados por esa letra y ese puesto
+
+```SQL
+select SUBSTRING(nombre,1,1) AS name, puesto, COUNT(*) puesto
+from empleado 
+group by SUBSTRING(nombre, 1,1), puesto;
+```
+#### Agrupamiento UNION ALL
+
+```SQL 
+SELECT GAMA, COUNT(*) AS TODO
+from
+    (select concat('TIPO_DE_GAMA:',' ',p.gama) as GAMA
+    from producto p
+    join gama_producto gp ON p.gama = gp.gama
+    UNION ALL
+    SELECT CONCAT('TIPO_DE_PRODUCTO:', ' ',gp.nombre) as GAMA
+    from producto gp)as GAMA
+    GROUP BY GAMA;
+```
+#### Concatenar resultados de Agrupamiento
+
+```SQL
+SELECT e.codigo_empleado, e.nombre, GROUP_CONCAT(c.nombre_cliente ORDER BY c.nombre_cliente ASC SEPARATOR ' | ') as CLIENTES, COUNT(*) CLIENTES
+FROM empleado e
+JOIN cliente c ON e.codigo_empleado = c.codigo_empleado_rep_ventas
+GROUP BY e.codigo_empleado
+ORDER BY e.codigo_empleado ASC, e.nombre DESC;
+```
+#### EXTRA: Totales por cada Agrupamiento
